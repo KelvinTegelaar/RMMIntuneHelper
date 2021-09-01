@@ -1,53 +1,67 @@
-function New-SyncoRMMApplication {
+function New-SyncroRMMApplication {
     [CmdletBinding()]
     Param
     (
         [parameter(Position = 0, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageName,
+        [ValidateNotNullOrEmpty()][String]$SyncroURL,
         
         [parameter(Position = 1, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageVersion,
+        [ValidateNotNullOrEmpty()][string]$SyncroAPIKey,
         
         [parameter(Position = 2, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageInstallCmd,
+        [ValidateNotNullOrEmpty()][String]$SyncroPolicyID,
 
         [parameter(Position = 3, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageUninstallCmd,
+        [ValidateNotNullOrEmpty()][String]$ApplicationId,
 
         [parameter(Position = 4, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageDetectionPath,
-
-        [parameter(Position = 4, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$PackageDetectionFile,
+        [ValidateNotNullOrEmpty()][String]$ApplicationSecret,
 
         [parameter(Position = 5, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$TenantID,
+        [ValidateNotNullOrEmpty()][String]$YourTenantID,
 
-        [parameter(Position = 5, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][String]$IntuneWinPath,
+        [parameter(Position = 6, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()][String]$refreshtoken,
 
-        [parameter(Position = 5, Mandatory = $true)]
-        [ValidateNotNullOrEmpty()][bool]$OverwriteExisting
+        [parameter(Position = 7, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()][bool]$AssignToAllDevices,
+
+        [parameter(Position = 8, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()][string]$PackageName,
+        
+        [parameter(Position = 9, Mandatory = $true)]
+        [ValidateNotNullOrEmpty()][string]$SyncroTenantVariable
 
     )
-    Write-Verbose "Getting a list of all tenants"
-    Connect-GraphAPI -ApplicationId $ApplicationId -ApplicationSecret $ApplicationSecret -Tenantid $TenantID
-    $Tenants = New-GraphRequest -resource "contracts"
+    Write-Verbose "Connecting to the Graph API for processing all clients"
+    Connect-GraphAPI -ApplicationId $ApplicationId -ApplicationSecret $ApplicationSecret -Tenantid $YourTenantID -RefreshToken $refreshtoken
+    Write-Verbose "Connecting to DRMM to get all tenants using tenant variable $DattoTenantVariable"
+    $Tenants = Get-SyncroRMMTenantInfo -URL $SyncroURL -key $SyncroAPIKey -VariableName $SyncroTenantVariable
     foreach ($Tenant in $Tenants) {
+        write-verbose "Starting process for tenant $($tenant.name)"
         try {
-            Connect-GraphAPI -Tenantid $TenantID
+            write-verbose "Downloading client for $($tenant.name) / $($tenant.tenantid)"
+            #need to actually add the downloading of the agent.
+            #  $null = New-item -ItemType Directory "$ENV:Temp\$($tenant.uid)" -ErrorAction SilentlyContinue
+            # (New-Object System.Net.WebClient).DownloadFile("https://pinotage.centrastage.net/csm/profile/downloadAgent/$($tenant.uid)", "$ENV:Temp\$($tenant.id)\SyncroSetup.exe")
             $params = @{
-                packagename           = $PackageName 
-                packageversion        = $PackageVersion
-                packageinstallcmd     = $PackageInstallCmd 
-                packageuninstallcmd   = $PackageUninstallCmd 
-                packaagedetectionpath = $PackageDetectionPath 
-                packagedetectionfile  = $PackageDetectionFile
+                packagename          = $PackageName
+                packageversion       = '1.0'
+                packageinstallcmd    = "SyncroSetup.exe --console --customerid $($tenant.id) --policyid $SyncroPolicyID"
+                packageuninstallcmd  = "C:\Program Files (x86)\CentraStage\uninst.exe /S"
+                packagedetectionpath = "C:\Programdata\CentraStage\AEMAgent"
+                packagedetectionfile = "AEMAgent.exe"
+                InstallerPath        = "$ENV:Temp\$($tenant.id)\SyncroSetup.exe.exe"
+                TenantID             = $Tenant.tenantid
             }
-            New-IntunePackage @Params
+            write-verbose "Starting to create package for $($tenant.name)"
+            $NewPackage = New-IntunePackage @Params
+            if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage.id }
+            $Cleanup = Get-ChildItem "$ENV:Temp\$($tenant.uid)" | Remove-Item -Force
         }
         catch {
-            write-error "Failed for tenant $($tenant.defaultdomainname). Moving onto next client."
+            write-error "Failed for tenant $($tenant.name): $($_.Exception.Message)"
         }
+
     }
 }
