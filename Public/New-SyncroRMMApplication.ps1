@@ -60,7 +60,7 @@ function New-SyncroRMMApplication {
             write-verbose "Starting to create package for $($tenant.name)"
             $NewPackage = New-IntunePackage @Params
             if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage.id }
-            $Cleanup = Get-ChildItem "$ENV:Temp\$($tenant.uid)" | Remove-Item -Force
+            $Cleanup = Get-ChildItem "$ENV:Temp\$($tenant.id)" | Remove-Item -Force
         }
         catch {
             write-error "Failed for tenant $($tenant.name): $($_.Exception.Message)"
