@@ -49,6 +49,19 @@ function Send-intunepackage {
         "committedContentVersion" = "1"
     } | Convertto-Json
     $CommitFinalizeReq = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $Confirmbody -Method PATCH -ContentType "application/json"
+    Write-Verbose "checking if path contains logo.png, and if so, uploading logo to intune"
+    if (test-path "$Installerdir\logo.png") {
+        Write-Verbose "     found logo.png. Uploading"
+        $base64Logo = [convert]::ToBase64String((get-content "$Installerdir\logo.png" -encoding byte))
+        $ConfirmBody = @{
+            "@odata.type" = "#microsoft.graph.win32lobapp"
+            "LargeIcon"   = @{ 
+                "type"  = "image/png"
+                "value" = $base64logo
+            }
+        } | Convertto-Json
+        $CommitFinalizeReq = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $Confirmbody -Method PATCH -ContentType "application/json"
+    }
     Write-Verbose "Removing temporary files as everything has been uploaded."
     $Cleanup = get-childitem $InstallerDir -Filter *.intunewin | remove-item -Force
     return $($NewApp.id)
