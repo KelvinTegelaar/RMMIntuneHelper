@@ -51,16 +51,18 @@ function Send-intunepackage {
     $CommitFinalizeReq = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $Confirmbody -Method PATCH -ContentType "application/json"
     Write-Verbose "checking if path contains logo.png, and if so, uploading logo to intune"
     if (test-path "$Installerdir\logo.png") {
-        Write-Verbose "     found logo.png. Uploading"
+        Write-Verbose "     found logo.png. Trying to upload image"
         $base64Logo = [convert]::ToBase64String((get-content "$Installerdir\logo.png" -encoding byte))
-        $ConfirmBody = @{
+        $LogoBody = [ordered]@{
             "@odata.type" = "#microsoft.graph.win32lobapp"
-            "LargeIcon"   = @{ 
+            "largeIcon"   = [ordered]@{ 
                 "type"  = "image/png"
                 "value" = $base64logo
             }
         } | Convertto-Json
-        $CommitFinalizeReq = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $Confirmbody -Method PATCH -ContentType "application/json"
+        Write-Verbose "using $($BaseURI)/$($NewApp.id) for logo upload"
+        Write-Verbose $LogoBody
+        $LogoPatchRequest = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $LogoBody -Method PATCH -ContentType "application/json"
     }
     Write-Verbose "Removing temporary files as everything has been uploaded."
     $Cleanup = get-childitem $InstallerDir -Filter *.intunewin | remove-item -Force
