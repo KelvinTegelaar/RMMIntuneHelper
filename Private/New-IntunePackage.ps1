@@ -54,7 +54,7 @@ function New-IntunePackage {
     
     if ($ApplicationList | where-object { $_.DisplayName -eq $Packagename }) {
         write-output "The package $($PackageName) already exists, We are removing the existing application."
-        Remove-IntunePackage -Packagename $PackageName
+        $Removal = Remove-IntunePackage -Packagename $PackageName
     }
 
     write-verbose "Creating new intunewin package for $($PackageName)"
