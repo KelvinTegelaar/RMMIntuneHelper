@@ -69,5 +69,7 @@ function New-IntunePackage {
     $intuneBody.detectionrules[0].path = $PackageDetectionPath
     $intuneBody.detectionRules[0].fileorfoldername = $PackageDetectionFile
     Write-Verbose "Sending package to endpoint manager."
-    Send-Intunepackage -package $IntuneWinPath -encryptioninfo $EncryptionInfo -intunebody ($intunebody | ConvertTo-Json)
+    $NewAppID = Send-Intunepackage -package $IntuneWinPath -encryptioninfo $EncryptionInfo -intunebody ($intunebody | ConvertTo-Json)
+    Write-Verbose "Done. Application ID is $NewAppID. Returning this value."
+    return $($NewAppID)
 }

@@ -56,7 +56,7 @@ function New-GenericApplication {
                 TenantID             = $Tenant.customerid
             }
             $NewPackage = New-IntunePackage @Params
-            if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage.id }
+            if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage }
         }
         catch {
             write-error "Failed for tenant $($tenant.defaultdomainname): $($_.Exception.Message)"

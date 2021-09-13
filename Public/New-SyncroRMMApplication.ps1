@@ -59,7 +59,7 @@ function New-SyncroRMMApplication {
             }
             write-verbose "Starting to create package for $($tenant.name)"
             $NewPackage = New-IntunePackage @Params
-            if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage.id }
+            if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage }
             $Cleanup = Get-ChildItem "$ENV:Temp\$($tenant.id)" | Remove-Item -Force
         }
         catch {
