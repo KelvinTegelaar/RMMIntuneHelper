@@ -45,13 +45,14 @@ function New-IntunePackage {
     Write-Verbose "Creating new intune package for $TenantID"
     write-verbose "Creating intune package in Endpoint Manager, if $($PackageNames) does not exist"
     try {
-        $ApplicationList = (Invoke-RestMethod -Uri "https://graph.microsoft.com/beta/deviceAppManagement/mobileApps" -Headers $script:GraphHeader -Method get -ContentType "application/json").value | where-object { $_.DisplayName -eq $Packagename }
+        $ApplicationList = (Invoke-RestMethod -Uri "https://graph.microsoft.com/beta/deviceAppManagement/mobileApps" -Headers $script:GraphHeader -Method get -ContentType "application/json")
+        if ($ApplicationList.value) { $applicationlist = $ApplicationList.value }
     }
     catch {
         throw "Error: Could not connect to API to retrieve current packages: $($_.Exception.Message)"
     } 
     
-    if ($ApplicationList.count) {
+    if ($ApplicationList | where-object { $_.DisplayName -eq $Packagename }) {
         write-output "The package $($PackageName) already exists, We are removing the existing application."
         Remove-IntunePackage -Packagename $PackageName
     }
