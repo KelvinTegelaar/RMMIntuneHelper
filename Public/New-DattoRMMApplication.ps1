@@ -46,7 +46,7 @@ function New-DattoRMMApplication {
             $params = @{
                 packagename          = $PackageName
                 packageversion       = '1.0'
-                packageinstallcmd    = "AgentInstall.exe"
+                packageinstallcmd    = "AgentInstall.exe /PROF $($tenant.uid)"
                 packageuninstallcmd  = "C:\Program Files (x86)\CentraStage\uninst.exe /S"
                 packagedetectionpath = "C:\Programdata\CentraStage\AEMAgent"
                 packagedetectionfile = "AEMAgent.exe"
@@ -54,7 +54,8 @@ function New-DattoRMMApplication {
                 TenantID             = $Tenant.tenantid
             }
             write-verbose "Starting to create package for $($tenant.name)"
-            $NewPackage = New-IntunePackage @Params
+            $NewPackage = New-IntunePackage @Params | Select-Object -last 1
+            write-verbose "Assigning Package $($NewPackage) to all devices, using type $($NewPackage.gettype())"
             if ($AssignToAllDevices) { Set-IntunePackageAssign -PackageID $NewPackage }
             $Cleanup = Get-ChildItem "$ENV:Temp\$($tenant.uid)" | Remove-Item -Force
         }

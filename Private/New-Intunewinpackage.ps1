@@ -13,6 +13,11 @@ function New-IntunewinPackage {
     catch {
         throw "could not get installer path. Did you enter the right path?"
     }
+    $Returnedfile = get-childitem $InstallerDirectory -Filter *.intunewin | Sort-Object LastWriteTime | Select-Object -Last 1
+    if ($Returnedfile) {
+        Write-Verbose "This package already exists, reusing older package."
+        return $Returnedfile.fullname
+    }
     try {
         $InstallerSize = [math]::round(($InstallerFiles | Measure-Object -Property Length -sum).sum)
         if ($InstallerSize -lt 11MB) {

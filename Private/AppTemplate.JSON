@@ -11,7 +11,7 @@
     "@odata.type": "#microsoft.graph.win32LobApp",
     "applicableArchitectures": "x86, x64",
     "installExperience": {
-        "runAsAccount": "user",
+        "runAsAccount": "system",
         "deviceRestartBehavior": "allow",
         "@odata.type": "microsoft.graph.win32LobAppInstallExperience"
     },

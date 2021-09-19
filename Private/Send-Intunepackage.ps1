@@ -65,6 +65,6 @@ function Send-intunepackage {
         $LogoPatchRequest = Invoke-RestMethod -Uri "$($BaseURI)/$($NewApp.id)" -Headers $script:GraphHeader -body $LogoBody -Method PATCH -ContentType "application/json"
     }
     Write-Verbose "Removing temporary files as everything has been uploaded."
-    $Cleanup = get-childitem $InstallerDir -Filter *.intunewin | remove-item -Force
+    $Cleanup = get-item "$InstallerDir\IntunePackage.intunewin" | remove-item -Force
     return $($NewApp.id)
 }
